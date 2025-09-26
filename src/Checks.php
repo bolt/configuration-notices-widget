@@ -8,7 +8,6 @@ use Bolt\Configuration\Config;
 use Bolt\Extension\BaseExtension;
 use Bolt\Kernel;
 use Bolt\Repository\FieldRepository;
-use ComposerPackages\Packages;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -143,7 +142,6 @@ class Checks
         $this->imageFunctionsCheck();
         $this->maintenanceCheck();
         $this->servicesCheck();
-        $this->symfonyVersionCheck();
         $this->checkDeprecatedDebug();
         $this->checkDoctrineMissingJsonGetText();
         $this->forbiddenFieldNamesCheck();
@@ -660,28 +658,6 @@ class Checks
             $info .= "<a href='https://github.com/bolt/project/pull/35/files'>bolt/project</a> repository.";
 
             $this->setNotice(3, $notice, $info);
-        }
-    }
-
-    private function symfonyVersionCheck(): void
-    {
-        // Leave early, because we only want to show this if the Deprecated Debug has been solved first.
-        if ($this->indexHasDeprecatedDebug()) {
-            return;
-        }
-        $version = Packages::symfonyFrameworkBundle()->getVersion();
-
-        if ($version < '5.0.0.0') {
-            $code = '"extra": {
-    "symfony": {
-        "allow-contrib": true,
-        "require": "^5.1"
-    },';
-            $notice = 'Bolt is currently running on Symfony 4. To bump the version to <strong>Symfony 5.1</strong>, edit <code>composer.json</code> in the project root folder and set the following:';
-            $info = '<pre>' . $code . '</pre>';
-            $info .= 'Run <code>composer update</code> to do the upgrade to Symfony 5.1.';
-
-            $this->setNotice(1, $notice, $info);
         }
     }
 
