@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BobdenOtter\ConfigurationNotices;
+namespace Bolt\ConfigurationNoticesWidget;
 
 use Bolt\Extension\BaseExtension;
 use Bolt\Widget\BaseWidget;
@@ -18,11 +18,18 @@ class ConfigurationWidget extends BaseWidget implements TwigAwareInterface, Requ
     use StopwatchTrait;
 
     protected $name = 'Configuration Notices Widget';
+
     protected $target = AdditionalTarget::WIDGET_BACK_DASHBOARD_ASIDE_TOP;
+
     protected $priority = 100;
+
     protected $template = '@configuration-notices-widget/configuration.html.twig';
+
     protected $zone = RequestZone::BACKEND;
 
+    /**
+     * @param array<string, mixed> $params
+     */
     protected function run(array $params = []): ?string
     {
         /** @var BaseExtension $extension */
