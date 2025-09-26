@@ -13,11 +13,11 @@
         }
     ],
     "require": {
-        "php": ">=7.2.9"
+        "php": ">=8.1"
     },
     "require-dev": {
-        "bolt/core": "^5.2",
-        "symplify/easy-coding-standard": "^8.3"
+        "bolt/core": "^5.2 || ^6",
+        "symplify/easy-coding-standard": "^12.5"
     },
     "autoload": {
         "psr-4": {
@@ -34,5 +34,12 @@
     },
     "replace": {
         "bobdenotter/configuration-notices": "*"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/flex": false,
+            "drupol/composer-packages": false,
+            "dealerdirect/phpcodesniffer-composer-installer": false
+        }
     }
 }

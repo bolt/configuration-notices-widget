@@ -18,9 +18,13 @@ class ConfigurationWidget extends BaseWidget implements TwigAwareInterface, Requ
     use StopwatchTrait;
 
     protected $name = 'Configuration Notices Widget';
+
     protected $target = AdditionalTarget::WIDGET_BACK_DASHBOARD_ASIDE_TOP;
+
     protected $priority = 100;
+
     protected $template = '@configuration-notices-widget/configuration.html.twig';
+
     protected $zone = RequestZone::BACKEND;
 
     protected function run(array $params = []): ?string

@@ -32,6 +32,7 @@ class Checks
     private $extensionConfig;
 
     private $notices = [];
+
     private $severity = 0;
 
     /** @var Container */
@@ -172,7 +173,6 @@ class Checks
         );
     }
 
-
     /**
      * Check whether the configured APP_ENV is valid.
      */
@@ -186,7 +186,7 @@ class Checks
             2,
             'Bolt supports three different modes for <code>APP_ENV</code>: <code>dev</code>, 
                 <code>prod</code> and <code>test</code>. You should only use one of these three.',
-            "The current configured <code>APP_ENV</code> is <code>" .
+            'The current configured <code>APP_ENV</code> is <code>' .
                 $this->getParameter('kernel.environment') . "</code>. Make sure you've used lowercase in 
                 your configured environment."
         );
@@ -623,7 +623,6 @@ class Checks
         $functions = array_key_exists('dql', $doctrine['doctrine']['orm']) ?
             $doctrine['doctrine']['orm']['dql']['string_functions'] : $doctrine['doctrine']['orm']['entity_managers']['default']['dql']['string_functions'];
 
-
         if (! array_key_exists('JSON_GET_TEXT', $functions)) {
             $notice = 'The <code>JSON_TEXT_FUNCTION</code> is missing from your <code>config/packages/doctrine.yaml</code> definition.';
             $info = 'To resolve this, modify your <code>doctrine.yaml</code> file according to the changes on the ';
@@ -716,10 +715,7 @@ class Checks
         ];
     }
 
-    /**
-     * @return string|bool|null
-     */
-    private function getParameter(string $parameter)
+    private function getParameter(string $parameter): string|bool|null
     {
         return $this->container->getParameter($parameter);
     }
