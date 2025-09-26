@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BobdenOtter\ConfigurationNotices;
+namespace Bolt\ConfigurationNoticesWidget;
 
 use Bolt\Configuration\Config;
 use Bolt\Extension\BaseExtension;
@@ -166,7 +166,7 @@ class Checks
              Ensure debug is disabled in production environments, otherwise it will
              result in an extremely large <code>var/cache</code> folder and a measurable reduced
              performance.',
-            "If you wish to hide this message, add a key to your <abbr title='config/extensions/bobdenotter-configurationnotices.yaml'>
+            "If you wish to hide this message, add a key to your <abbr title='config/extensions/bolt-configurationnoticeswidget.yaml'>
              config <code>yaml</code></abbr> file with a (partial) domain name in it, that should be
              seen as a development environment: <code>local_domains: [ '.foo' ]</code>."
         );

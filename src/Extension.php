@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BobdenOtter\ConfigurationNotices;
+namespace Bolt\ConfigurationNoticesWidget;
 
 use Bolt\Extension\BaseExtension;
 

@@ -5,6 +5,9 @@
     "license": "MIT",
     "authors": [
         {
+            "name": "Bolt developers"
+        },
+        {
             "name": "Bob den Otter",
             "email": "bob@twokings.nl"
         }
@@ -18,13 +21,13 @@
     },
     "autoload": {
         "psr-4": {
-            "BobdenOtter\\ConfigurationNotices\\": "src/"
+            "Bolt\\ConfigurationNoticesWidget\\": "src/"
         }
     },
     "minimum-stability": "beta",
     "prefer-stable": true,
     "extra": {
-        "entrypoint": "BobdenOtter\\ConfigurationNotices\\Extension",
+        "entrypoint": "Bolt\\ConfigurationNoticesWidget\\Extension",
         "screenshots": [
             "screenshots/notices.png"
         ]

@@ -3,8 +3,10 @@
 Bolt Configuration Notices is a small tool to point out common pitfalls for
 Bolt 5 configuration settings.
 
+> This repository was forked from [bobdenotter/configuration-notices](https://github.com/bobdenotter/configuration-notices) and updated to be used with newer versions of [bolt/core](https://github.com/bolt/core).
+
 ```bash
-composer require bobdenotter/configuration-notices
+composer require bolt/configuration-notices-widget
 ```
 
 -------
