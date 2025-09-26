@@ -6,9 +6,11 @@ namespace Bolt\ConfigurationNoticesWidget;
 
 use Bolt\Configuration\Config;
 use Bolt\Extension\BaseExtension;
+use Bolt\Kernel;
 use Bolt\Repository\FieldRepository;
 use ComposerPackages\Packages;
-use Symfony\Component\DependencyInjection\Container;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,41 +18,47 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Throwable;
 use Tightenco\Collect\Support\Collection;
 
 class Checks
 {
-    protected $defaultDomainPartials = ['.dev', 'dev.', 'devel.', 'development.', 'test.', '.test', 'new.', '.new', '.local', 'local.', '.wip', 'localhost'];
+    /** @var string[] */
+    protected array $defaultDomainPartials = ['.dev', 'dev.', 'devel.', 'development.', 'test.', '.test', 'new.', '.new', '.local', 'local.', '.wip', 'localhost'];
 
-    /** @var Config */
-    private $boltConfig;
+    private readonly Config $boltConfig;
 
-    /** @var Request */
-    private $request;
+    private readonly Request $request;
 
-    /** @var Collection */
-    private $extensionConfig;
+    private readonly Collection $extensionConfig;
 
-    private $notices = [];
+    /**
+     * @var array<array{
+     *   severity: string,
+     *   notice: string,
+     *   info: string|null,
+     * }>
+     */
+    private array $notices = [];
 
-    private $severity = 0;
+    private int $severity = 0;
 
-    /** @var Container */
-    private $container;
+    private readonly ContainerInterface $container;
 
-    /** @var BaseExtension */
-    private $extension;
+    private readonly BaseExtension $extension;
 
-    /** @var FieldRepository */
-    private $fieldRepository;
+    private readonly FieldRepository $fieldRepository;
 
-    private $levels = [
+    /** @var array<int, string> */
+    private array $levels = [
         1 => 'info',
         2 => 'warning',
         3 => 'danger',
     ];
 
-    private $generalForbiddenFieldNames = [
+    /** @var string[] */
+    private array $generalForbiddenFieldNames = [
         'id',
         'definitionfromcontenttypeconfig',
         'twig',
@@ -70,7 +78,8 @@ class Checks
         'array',
     ];
 
-    private $setForbiddenFieldNames = [
+    /** @var string[] */
+    private array $setForbiddenFieldNames = [
         'id',
         'definition',
         'name',
@@ -89,18 +98,29 @@ class Checks
         'contentselect',
     ];
 
-    private $client = null;
+    private ?HttpClientInterface $client = null;
 
     public function __construct(BaseExtension $extension)
     {
         $this->boltConfig = $extension->getBoltConfig();
         $this->request = $extension->getRequest();
         $this->extensionConfig = $extension->getConfig();
-        $this->container = $extension->getContainer();
+        $this->container = ($container = $extension->getContainer()) instanceof ContainerInterface
+          ? $container : throw new RuntimeException('Invalid container class');
         $this->extension = $extension;
         $this->fieldRepository = $extension->getService(FieldRepository::class);
     }
 
+    /**
+     * @return null|array{
+     *   severity: int,
+     *   notices: array<array{
+     *    severity: string,
+     *    notice: string,
+     *    info: string|null,
+     *  }>,
+     * }
+     */
     public function getResults(): ?array
     {
         if (! $this->isReady()) {
@@ -196,6 +216,11 @@ class Checks
     {
         $host = parse_url($this->request->getSchemeAndHttpHost());
 
+        // Detection failed
+        if (! isset($host['host'])) {
+            return false;
+        }
+
         // If we have an IP-address, we assume it's "dev" / local
         if (filter_var($host['host'], FILTER_VALIDATE_IP) !== false) {
             return true;
@@ -207,7 +232,7 @@ class Checks
         ));
 
         foreach ($domainPartials as $partial) {
-            if (mb_strpos($host['host'], $partial) !== false) {
+            if (mb_strpos($host['host'], (string) $partial) !== false) {
                 return true;
             }
         }
@@ -220,7 +245,7 @@ class Checks
      */
     private function newContentTypeCheck(): void
     {
-        $fromParameters = explode('|', $this->getParameter('bolt.requirement.contenttypes'));
+        $fromParameters = explode('|', (string) $this->getParameter('bolt.requirement.contenttypes'));
 
         foreach ($this->boltConfig->get('contenttypes') as $contentType) {
             if (! in_array($contentType->get('slug'), $fromParameters, true)) {
@@ -243,9 +268,7 @@ class Checks
 
         foreach ($this->boltConfig->get('contenttypes') as $contentType) {
             $fields = $contentType->get('fields');
-            $slugs = $fields->filter(function (Collection $field) {
-                return $field->get('type') === 'slug';
-            });
+            $slugs = $fields->filter(fn (Collection $field): bool => $field->get('type') === 'slug');
 
             foreach ($slugs as $name => $slug) {
                 if (! $slug->has('uses')) {
@@ -317,6 +340,9 @@ class Checks
         }
     }
 
+    /**
+     * @phpstan-ignore missingType.iterableValue
+     */
     private function checkFieldName(string $name, array $field, string $ct): void
     {
         if ($field['type'] === 'set') {
@@ -490,7 +516,14 @@ class Checks
      */
     private function canonicalCheck(): void
     {
-        $hostname = parse_url(strtok($this->request->getUri(), '?'));
+        if (! $tokenisedUri = strtok($this->request->getUri(), '?')) {
+            return;
+        }
+        $hostname = parse_url($tokenisedUri);
+
+        if (! isset($hostname['scheme']) || ! isset($hostname['host'])) {
+            return;
+        }
 
         if ($hostname['scheme'] !== $_SERVER['CANONICAL_SCHEME'] || $hostname['host'] !== $_SERVER['CANONICAL_HOST']) {
             $canonical = sprintf('%s://%s', $_SERVER['CANONICAL_SCHEME'], $_SERVER['CANONICAL_HOST']);
@@ -577,11 +610,6 @@ class Checks
 
     private function servicesCheck(): void
     {
-        // This method is only available on 4.0.0 RC 21 and up.
-        if (! method_exists($this->extension, 'getAllServiceNames')) {
-            return;
-        }
-
         $checkServices = (array) Yaml::parseFile(dirname(__DIR__) . '/services.yaml');
 
         $availableServices = $this->extension->getAllServiceNames();
@@ -616,7 +644,10 @@ class Checks
      */
     private function checkDoctrineMissingJsonGetText(): void
     {
-        $projectDir = $this->container->get('kernel')->getprojectDir();
+        /** @var Kernel $kernel */
+        $kernel = $this->container->get('kernel');
+        $projectDir = $kernel->getProjectDir();
+
         $doctrine = Yaml::parseFile($projectDir . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR . 'doctrine.yaml');
 
         // Ensure it doesn't break, if there are multiple entity managers causing a different configuration structure
@@ -658,13 +689,13 @@ class Checks
     {
         $filename = $this->boltConfig->getPath('web') . '/index.php';
 
-        $file = file_get_contents($filename);
+        $file = file_get_contents($filename) ?: '';
 
         // We split the string below, so ECS doesn't "helpfully" substitute it for the classname.
         return mb_strpos($file, 'Symfony\Compo' . 'nent\Debug\Debug') !== false;
     }
 
-    private function isWritable($fileSystem, $filename, bool $keep = false): bool
+    private function isWritable(string $fileSystem, string $filename, bool $keep = false): bool
     {
         $filePath = $this->boltConfig->getPath($fileSystem) . $filename;
         $filesystem = new Filesystem();
@@ -674,25 +705,27 @@ class Checks
             if (! $keep) {
                 $filesystem->remove($filePath);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable) {
             return false;
         }
 
         return true;
     }
 
-    private function isReachable(string $relativeUrl)
+    private function isReachable(string $relativeUrl): bool
     {
         if (! $this->client) {
             $this->client = HttpClient::create();
         }
 
-        $url = $this->container->get('router')->generate('homepage', [], RouterInterface::ABSOLUTE_URL) . $relativeUrl;
+        /** @var RouterInterface $router */
+        $router = $this->container->get('router');
+        $url = $router->generate('homepage', [], RouterInterface::ABSOLUTE_URL) . $relativeUrl;
         $response = $this->client->request('GET', $url);
 
         try {
             return $response->getStatusCode() === Response::HTTP_OK;
-        } catch (TransportExceptionInterface $e) {
+        } catch (TransportExceptionInterface) {
         }
 
         //  ¯\_(ツ)_/¯
@@ -715,7 +748,7 @@ class Checks
         ];
     }
 
-    private function getParameter(string $parameter): string|bool|null
+    private function getParameter(string $parameter): mixed
     {
         return $this->container->getParameter($parameter);
     }

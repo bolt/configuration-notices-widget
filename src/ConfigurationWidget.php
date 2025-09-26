@@ -27,6 +27,9 @@ class ConfigurationWidget extends BaseWidget implements TwigAwareInterface, Requ
 
     protected $zone = RequestZone::BACKEND;
 
+    /**
+     * @param array<string, mixed> $params
+     */
     protected function run(array $params = []): ?string
     {
         /** @var BaseExtension $extension */
