@@ -9,7 +9,6 @@ use Bolt\Extension\BaseExtension;
 use Bolt\Kernel;
 use Bolt\Repository\FieldRepository;
 use Illuminate\Support\Collection;
-use RuntimeException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpClient\HttpClient;
@@ -30,6 +29,7 @@ class Checks
 
     private readonly Request $request;
 
+    /** @var Collection<string, mixed> */
     private readonly Collection $extensionConfig;
 
     /**
@@ -104,8 +104,7 @@ class Checks
         $this->boltConfig = $extension->getBoltConfig();
         $this->request = $extension->getRequest();
         $this->extensionConfig = $extension->getConfig();
-        $this->container = ($container = $extension->getContainer()) instanceof ContainerInterface
-          ? $container : throw new RuntimeException('Invalid container class');
+        $this->container = $extension->getContainer();
         $this->extension = $extension;
         $this->fieldRepository = $extension->getService(FieldRepository::class);
     }
@@ -407,7 +406,9 @@ class Checks
         $configContent = $this->boltConfig->get('contenttypes');
         $configTaxo = $this->boltConfig->get('taxonomies');
 
+        /** @phpstan-ignore argument.templateType,argument.templateType */
         $contenttypes = collect($configContent->pluck('slug'))->merge($configContent->pluck('singular_slug'))->unique();
+        /** @phpstan-ignore argument.templateType,argument.templateType */
         $taxonomies = collect($configTaxo->pluck('slug'))->merge($configTaxo->pluck('singular_slug'))->unique();
 
         $overlap = $contenttypes->intersect($taxonomies);
