@@ -19,7 +19,7 @@
         "bolt/core": "^5.2 || ^6",
         "phpstan/phpstan": "2.1.28",
         "rector/rector": "2.1.7",
-        "symplify/easy-coding-standard": "^12.5"
+        "symplify/easy-coding-standard": "^13"
     },
     "autoload": {
         "psr-4": {
