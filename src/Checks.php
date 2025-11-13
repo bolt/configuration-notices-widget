@@ -8,6 +8,7 @@ use Bolt\Configuration\Config;
 use Bolt\Extension\BaseExtension;
 use Bolt\Kernel;
 use Bolt\Repository\FieldRepository;
+use Illuminate\Support\Collection;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Filesystem\Filesystem;
@@ -19,7 +20,6 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
-use Tightenco\Collect\Support\Collection;
 
 class Checks
 {
