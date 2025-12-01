@@ -44,7 +44,8 @@
         "allow-plugins": {
             "symfony/flex": false,
             "drupol/composer-packages": false,
-            "dealerdirect/phpcodesniffer-composer-installer": false
+            "dealerdirect/phpcodesniffer-composer-installer": false,
+            "symfony/runtime": true
         }
     }
 }
