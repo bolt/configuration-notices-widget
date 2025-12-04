@@ -1,6 +1,6 @@
 {
     "name": "bolt/configuration-notices-widget",
-    "description": "💡 A small tool to point out common pitfalls for Bolt 5 configuration settings",
+    "description": "💡 A small tool to point out common pitfalls for Bolt configuration settings",
     "type": "bolt-extension",
     "license": "MIT",
     "authors": [
